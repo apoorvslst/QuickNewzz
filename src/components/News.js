@@ -33,7 +33,8 @@ export default class News extends Component {
   fetchNews = async (pageNo) => {
     try {
       this.props.setProgress(10);
-      let url=`/api/news`;
+      let url = `https://cors-anywhere.herokuapp.com/https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=4ae62c67a7b5420382f9245f1b1cd3b3&page=${this.state.page}&pageSize=20`;
+
       this.setState({ Loading: true, error: null });
       
       let data = await fetch(url);
