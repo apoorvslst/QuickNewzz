@@ -26,49 +26,63 @@ export default class News extends Component {
     }
   }
 
+  getNewsFromAPI = async (country, category, pageNo, pageSize = 20) => {
+    const API_KEY = "4ae62c67a7b5420382f9245f1b1cd3b3"; 
+    const url = `https://newsapi.org/v2/top-headlines?country=${country}&category=${category}&apiKey=${API_KEY}&page=${pageNo}&pageSize=${pageSize}`;
+    let response = await fetch(url);
+    return await response.json();
+  };
+
   async componentDidMount() {
     await this.fetchNews(1);
   }
 
   fetchNews = async (pageNo) => {
-    try {
-      this.props.setProgress(10);
-      let url = `https://cors-anywhere.herokuapp.com/https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=4ae62c67a7b5420382f9245f1b1cd3b3&page=${this.state.page}&pageSize=20`;
+  try {
+    this.props.setProgress(10);
+    this.setState({ Loading: true, error: null });
 
-      this.setState({ Loading: true, error: null });
-      
-      let data = await fetch(url);
-      this.props.setProgress(30);
+    let parseddata = await this.getNewsFromAPI(
+      this.props.country,
+      this.props.category,
+      pageNo
+    );
 
-      let parseddata = await data.json();
-      this.props.setProgress(60);
+    this.props.setProgress(60);
 
-      if (parseddata.status === "error") {
-        // API error (like rate limit)
-        this.setState({ error: parseddata.message, articles: [], Loading: false });
-      } else {
-        this.setState({
-          page: pageNo,
-          articles: parseddata.articles || [],
-          totalResults: parseddata.totalResults || 0,
-          Loading: false
-        });
-      }
-
+    // Check API response
+    if (!parseddata || parseddata.status !== "ok") {
+      this.setState({ 
+        error: parseddata?.message || "Something went wrong", 
+        articles: [], 
+        Loading: false 
+      });
       this.props.setProgress(100);
-    } catch (err) {
-      this.setState({ error: "Failed to fetch news.", Loading: false });
-      this.props.setProgress(100);
+      return; // stop here
     }
+
+    this.setState({
+      page: pageNo,
+      articles: parseddata.articles || [],
+      totalResults: parseddata.totalResults || 0,
+      Loading: false
+    });
+
+    this.props.setProgress(100);
+  } catch (err) {
+    this.setState({ error: "Failed to fetch news.", Loading: false });
+    this.props.setProgress(100);
   }
+};
+
 
   handlenext = async () => {
     await this.fetchNews(this.state.page + 1);
-  }
+  };
 
   handleprev = async () => {
     await this.fetchNews(this.state.page - 1);
-  }
+  };
 
   render() {
     return (
@@ -118,4 +132,3 @@ export default class News extends Component {
     )
   }
 }
-
